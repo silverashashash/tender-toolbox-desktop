@@ -1,16 +1,69 @@
-# 招标现场工具箱 Windows 构建
+# 招标现场工具箱
 
-Java 17 / Swing 离线工具箱，供 Windows 10/11 x64 使用。
+先在 macOS Apple Silicon 开发和验证，再制作 Windows 10/11 x64 离线发行版。
 
-## 下载和运行
+当前是开发验证版。已接入所选13项的主要工作流：预警事项确认单（1）、供应商联系人预警（2）、IP/MAC校验（3）、超限价及税率核验（4）、价格分计算（5）、初评汇报（6）、履约分生成（7）、专家总分校验（8）、专家客观分校验（9）、授标（10）、经济排序表核验（11）、否决原因公示（12）、智能分包（14）。联系人输出目前按预警项展开，尚未复刻原版的连续包号合并排版。完整范围见工作区设计与实现计划。
 
-在 Actions 中打开成功的 Build Windows x64，下载 TenderToolbox-Windows-x64 构建产物。
-将其中的 TenderToolbox-Windows-x64.zip 完整解压，双击 TenderToolbox/TenderToolbox.exe。
-运行环境已经内置，无需安装 Java 或部署网站。分发时保留完整目录。
+## Mac 开发运行
 
-## 构建
+项目私有 JDK 位于 `.tools/`，Maven缓存位于 `.m2/`，不改变系统 Java。
 
-GitHub Actions 使用 Windows 2022 x64 和 Temurin Java 17，执行全部测试、jpackage 打包及13项内置演示验证。
-也可以在装有 JDK 17 和 Maven 的 Windows 上运行 ./build-windows.ps1。
+```sh
+./mvn-local test
+./mvn-local package dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory=target/lib
+./启动Mac开发版.command
+```
 
-源码和内置模板用于工具箱构建；业务输入及用户输出不在本仓库中。
+输入选择“开标一览表”和“供应商联系人信息表”；也可导出空白填写模板。选择结果目录后运行，预警结果只写入本机。
+
+各已接入页面都提供“载入演示样例”。其中联系人页面的“载入演示样例”会生成虚构的输入文件，并将结果目录设为系统临时目录；点击“开始处理”应生成一条传真相同的预警，内容为 `012345`。实际业务请重新选择输入文件和长期保存目录。
+
+经济排序表核验使用原系统格式的工作簿；具体规则和输入位置见 [规则说明](docs/rules/economicrank.md)。
+
+运行 `./build-mac.sh` 可构建包含 Java 运行环境的 `.app`，输出路径显示在终端。该构建针对当前 Apple Silicon Mac，生成新的目录，不覆盖上一版。尚未进行签名、公证或其他 Mac 机器验证。
+
+正式发布前尚需：可选自定义Word模板等原版选项、本地项目存储、真实业务样例与原输出对照、Mac完整验收、真实Windows 10/11现场离线测试。当前不得作为全部13项功能的正式发行版。
+
+## 2026-10-22 路径记忆
+
+所有文件/目录选择窗口共享最近确认的目录，重启后保留。选择文件时记录父目录，选择目录时记录该目录，取消不更新；不存在的目录回退到仍存在的上级目录。设置位于 `~/.tender-toolbox/settings.properties`，更新时保留其他设置并备份到 `.bak`。无法写入设置不妨碍当次选择，界面日志会提示。
+
+选择输入文件后，结果保存目录自动设为该文件所在文件夹；多份输入以最后选择的文件为准。可随后手动选择其他结果目录。重新选择文件或目录后，“打开结果目录”会使用当前目录。
+
+## 新增功能验证版
+
+新增5项的输入、核验口径及与原版的差异见 [迁移规则](docs/rules/more-tools.md)。每项均有虚构样例；输出前请用实际业务样例复核。13项演示工作流会在 Mac 打包时用内置 Java 环境逐项执行。
+
+## 表头识别与模板导出修复
+
+超限价核验兼容税率列名“增值税率或征收率（%）”，逐工作表自动识别表头，支持第3行表头，无需删除说明行。缺列时只提示实际缺失列及最接近的表头行。
+
+“导出填写模板”直接保存到界面的结果保存目录（不存在时创建）；成功提示完整文件清单，可打开所在文件夹。同名模板保留，新文件自动追加编号。
+
+## IP/MAC 与专家客观分
+
+新增两项均提供演示样例及所需填写模板，规则与原版差异见 [迁移说明](docs/rules/ipmac-objective.md)。本批通过合成工作簿、分页和打包验证，尚未用真实 IP/MAC 或客观评分明细与原网站逐份对照。
+
+## 本次新增：1、5、10、14
+
+- [预警事项确认单](docs/rules/warningform.md)：读取预警、分组和开标表，按评审组生成 Word 确认单并打包 ZIP；使用原版 Word 模板，保留原版格式及固定复核文字；未接入自定义 Word 模板。
+- [价格分计算](docs/rules/pricescore.md)：支持原版六种公式，以独立规则表提供各分标参数。参数须按采购文件填写；只处理参与计算的有效报价，多轮报价须明确轮次。
+- [授标](docs/rules/award.md)：支持无限授、一轮一包、一轮多包，有限授须提供分组规则；保留未能授标的包和原因。已用28份真实排序表核对无限授结果，共212个包；有限授尚待真实业务对照。
+- [智能分包](docs/rules/splitpack.md)：按比例或目标金额分配物料，输出分包明细、实际金额及目标偏差。目标金额不是硬限额，结果供复核。
+
+本次四项提供填写模板和演示样例。确认单、价格分及分包主要通过合成输入验证，仍需用实际业务文件验收。
+
+## Windows 10/11 x64 打包
+
+私有构建仓库：https://github.com/silverashashash/tender-toolbox-desktop 。
+源文件发布副本位于工作区 `outputs/windows-github-source`；更新时同步 `src`、`pom.xml`、Windows构建脚本及workflow后提交，推送main会触发构建。不要直接推送REA父仓库，也不要上传业务文件或target目录。
+
+`build-windows.ps1` 在 Windows 上用 Maven 测试并通过 jpackage 生成便携版，随后运行打包EXE验证13项演示。产物为 `TenderToolbox-Windows-x64.zip` 和 SHA-256 文件。完整解压后运行 `TenderToolbox/TenderToolbox.exe`，无需Java或网络；必须保留app和runtime目录。
+
+## GitHub 项目内容
+
+本仓库包含13项工具的Java源码、自动化测试、内置Word模板、合成演示样例、规则说明，以及Mac和Windows构建脚本。实际招标文件、用户生成结果、原网站程序和本地JDK/Maven缓存不上传。
+
+Windows构建已于2026-11-04通过108项测试及13项打包演示验证。下载Actions中的`TenderToolbox-Windows-x64`构建产物，完整解压后双击`TenderToolbox.exe`。
+
+Mac脚本使用项目私有工具链：按`toolchain.lock.json`将JDK和Maven放入`.tools/`中的对应目录；这些运行环境不包含在源码仓库中。

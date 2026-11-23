@@ -1,0 +1,27 @@
+{
+  "development_platform": "macOS aarch64",
+  "target_platforms": [
+    "macOS aarch64",
+    "Windows x64"
+  ],
+  "java": {
+    "version": "17.0.20+101",
+    "sha256": "196d13ba5f10414bef7f6a05a9b3f00edacb18ebacef2b99485db9e2ee18f0e8",
+    "source": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.20.1_1.tar.gz"
+  },
+  "maven": {
+    "version": "3.9.9",
+    "sha256": "7a9cdf674fc1703d6382f5f330b3d110ea1b512b51f1652846d9e4e8a588d766"
+  },
+  "analysis": {
+    "cfr": "0.152",
+    "sha256": "f686e8f3ded377d7bc87d216a90e9e9512df4156e75b06c655a16648ae8765b2"
+  },
+  "file_library": {
+    "poi": "4.1.2",
+    "status": "compatibility baseline, not final distribution selection"
+  },
+  "tests": {
+    "junit": "5.11.4"
+  }
+}
